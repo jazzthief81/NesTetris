@@ -248,7 +248,7 @@ advanceGame subroutine
         jsr advancePlayState
         jsr showCurrentPiece
         jsr backupGameVariables
-        jsr showNextTetrimino
+        jsr showNextTetriminoPatched
         inc playMode
         rts
 ;--------------------
@@ -873,6 +873,7 @@ lbl_863c
         jsr printTwoDigitNumber
         ldx #$0
 lbl_865f
+        jmp lbl_8693
         lda heightBoxGraphics,x    ; Draw height box
         inx
         sta PPUADDR
@@ -896,7 +897,6 @@ lbl_867f
         lda bTypeHeight
         and #$f
         sta PPUDATA
-        jmp lbl_8693
 lbl_8693
         jsr enableVerticalBlankingNMI
         jsr waitForVerticalBlankAndClearOAM
@@ -4873,7 +4873,7 @@ level_select_screen_background
         incbin backgrounds/level_select_screen.bin
 
 ingame_screen_background
-        incbin backgrounds/ingame_screen.bin
+        include backgrounds/ingame_screen.s
 
 highscore_screen_background
         incbin backgrounds/highscore_screen.bin
@@ -4899,142 +4899,145 @@ b_type_ending_screen_background
 type_a_ending_screen_background
         incbin backgrounds/a_type_ending_screen.bin
 
+;--------------------
+startPatchedRoutines
+;--------------------
+showNextTetriminoPatched subroutine
+		jsr showNextTetrimino
+		jsr showJoyPadButtons
+		rts
+;--------------------
+showJoyPadButtons subroutine
+        ldy objectAttributeMemoryIndex
+
+		; Show left arrow.
+
+        lda #192
+		sta objectAttributeMemory,y
+        lda #$d6
+		iny
+		sta objectAttributeMemory,y
+		lda buttonPressed
+		and #(JOYPAD_LEFT)
+		cmp #(JOYPAD_LEFT)
+		bne .leftPressed
+        lda #$00
+        jmp .setLeftColor
+.leftPressed
+        lda #$03
+.setLeftColor
+		iny
+		sta objectAttributeMemory,y
+        lda #192
+		iny
+		sta objectAttributeMemory,y
+
+		; Show right arrow.
+
+        lda #192
+		iny
+		sta objectAttributeMemory,y
+        lda #$c6
+		iny
+		sta objectAttributeMemory,y
+		lda buttonPressed
+		and #(JOYPAD_RIGHT)
+		cmp #(JOYPAD_RIGHT)
+		bne .rightPressed
+        lda #$00
+        jmp .setRightColor
+.rightPressed
+        lda #$03
+.setRightColor
+		iny
+		sta objectAttributeMemory,y
+        lda #205
+		iny
+		sta objectAttributeMemory,y
+
+		; Show down arrow.
+
+        lda #198
+		iny
+		sta objectAttributeMemory,y
+        lda #$e6
+		iny
+		sta objectAttributeMemory,y
+		lda buttonPressed
+		and #(JOYPAD_DOWN)
+		cmp #(JOYPAD_DOWN)
+		bne .downPressed
+        lda #$00
+        jmp .setDownColor
+.downPressed
+        lda #$03
+.setDownColor
+		iny
+		sta objectAttributeMemory,y
+        lda #199
+		iny
+		sta objectAttributeMemory,y
+
+		; Show B button.
+
+        lda #200
+		iny
+		sta objectAttributeMemory,y
+        lda #$f7
+		iny
+		sta objectAttributeMemory,y
+		lda buttonPressed
+		and #(JOYPAD_B)
+		cmp #(JOYPAD_B)
+		bne .bPressed
+        lda #$00
+        jmp .setBColor
+.bPressed
+        lda #$03
+.setBColor
+		iny
+		sta objectAttributeMemory,y
+        lda #215
+		iny
+		sta objectAttributeMemory,y
+
+		; Show A button.
+
+        lda #200
+		iny
+		sta objectAttributeMemory,y
+        lda #$f6
+		iny
+		sta objectAttributeMemory,y
+		lda buttonPressed
+		and #(JOYPAD_A)
+		cmp #(JOYPAD_A)
+		bne .aPressed
+        lda #$00
+        jmp .setAColor
+.aPressed
+        lda #$03
+.setAColor
+		iny
+		sta objectAttributeMemory,y
+        lda #224
+		iny
+		sta objectAttributeMemory,y
+
+		tya
+		clc
+		adc objectAttributeMemoryIndex
+		sta objectAttributeMemoryIndex
+
+		rts
+;--------------------
+endPatchedRoutines
+;--------------------
         ; Padding
 
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $80
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $04, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $40, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $10, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $04, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $c0, $60, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $f7, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $fb
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $7f, $ff, $df, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $df, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $fb, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $fe, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00
-
+		; Make sure the ROM stays aligned within the MMC1 mapper boundaries.
+		ds.b 1591-(endPatchedRoutines-startPatchedRoutines), $00
+;--------------------
 demoButtons
 
         ; Demo game controller inputs
