@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="NesTetris:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/NesTetris_jar</output-path>
+    <root id="archive" name="NesTetris.jar">
+      <element id="module-output" name="NesTetris" />
+    </root>
+  </artifact>
+</component>
