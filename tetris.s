@@ -268,7 +268,7 @@ advancePlayMode subroutine
         lda playMode
         jsr switch
         dc.b <initializePlayBackground, >initializePlayBackground
-        dc.b <initializeGame, >initializeGame
+        dc.b <initializeGamePatched, >initializeGamePatched
         dc.b <checkSelectPressed, >checkSelectPressed
         dc.b <showHighScore, >showHighScore
         dc.b <advanceGame, >advanceGame
@@ -961,7 +961,7 @@ lbl_86e9
         sta repeats
         sta demoIndex
         sta demoButtonsLowByte
-        sta nextSpawnId
+        sta gamePieceSpawnsHighByte
         lda #$dd
         sta demoButtonsHighByte
         lda #RENDER_MODE_PLAY_AND_DEMO_SCREENS
@@ -2159,37 +2159,25 @@ getNextTetrimino subroutine
         rts
 ;--------------------
 generateRandomTetrimino subroutine
-        inc spawnCount
-        lda randomNumberHighByte
-        clc
-        adc spawnCount
-        and #$7
-        cmp #$7
-        beq .rerollRandomNumber
+		ldy #0
+		lda (gamePieceSpawnsHighByte),y
+		pha
+		inc gamePieceSpawnsHighByte
+		bne .noOverflow
+		inc gamePieceSpawnsLowByte
+		lda gamePieceSpawnsLowByte
+		cmp >#endGamePieceSpawns
+		bne .noOverflow
+		lda #>#gamePieceSpawns
+		sta gamePieceSpawnsLowByte
+.noOverflow
+		pla
+		and #$7
         tax
         lda spawnTable,x
-        cmp nextSpawnId
-        bne .keepSpawnId
-.rerollRandomNumber
-        ldx #randomNumberHighByte
-        ldy #$2
-        jsr generateRandomNumber
-        lda randomNumberHighByte
-        and #$7
-        clc
-        adc nextSpawnId
-.subtract7
-        cmp #$7
-        bcc .smallerThan7
-        sec
-        sbc #$7
-        jmp .subtract7
-.smallerThan7
-        tax
-        lda spawnTable,x
-.keepSpawnId
-        sta nextSpawnId
         rts
+endGenerateRandomTetrimino
+		ds.b ($993b-$9907)-(endGenerateRandomTetrimino-generateRandomTetrimino), $ea
 ;--------------------
 tetriminoTypes
         dc.b $00, $00, $00, $00    ; T
@@ -4899,141 +4887,22 @@ b_type_ending_screen_background
 type_a_ending_screen_background
         incbin backgrounds/a_type_ending_screen.bin
 
-        ; Padding
+initializeGamePatched
+		lda #>gamePieceSpawns
+		sta gamePieceSpawnsLowByte
+		jsr initializeGame
+		rts
+endInitializeGamePatched
 
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $80
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $04, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $40, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $10, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $04, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $c0, $60, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $f7, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $fb
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $7f, $ff, $df, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $df, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $fb, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $fe, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00
+		; Padding
+		ds.b ($d700-$d6c9)-(endInitializeGamePatched-initializeGamePatched),$ea
+
+gamePieceSpawns
+        ds.b $400,$00
+endGamePieceSpawns
+
+		; Padding
+        ds.b $200,$00
 
 demoButtons
 

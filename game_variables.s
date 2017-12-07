@@ -1,7 +1,7 @@
 randomNumberHighByte equ $17
 randomNumberLowByte equ $18
-nextSpawnId equ $19
-spawnCount equ $1a
+gamePieceSpawnsHighByte equ $19
+gamePieceSpawnsLowByte equ $1a
 
 verticalBlankingInterval equ $33
 pieceX equ $40
