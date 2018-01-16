@@ -4887,10 +4887,30 @@ b_type_ending_screen_background
 type_a_ending_screen_background
         incbin backgrounds/a_type_ending_screen.bin
 
+RANDOMIZE_STARTING_POINT equ 0     ; determines whether the starting point inside the 1024 piece
+        						   ; sequence is randomized on every game (0=false, 1=true).
+
 initializeGamePatched
 		lda #>gamePieceSpawns
 		sta gamePieceSpawnsLowByte
+
 		jsr initializeGame
+
+		IF RANDOMIZE_STARTING_POINT
+
+        lda randomNumberLowByte		; Add random offset between $0 and $3ff to start of piece spawn table
+        and #$3
+        clc
+        adc gamePieceSpawnsLowByte
+        sta gamePieceSpawnsLowByte
+
+        lda randomNumberHighByte
+        clc
+        adc gamePieceSpawnsHighByte
+        sta gamePieceSpawnsHighByte
+
+		EIF
+
 		rts
 endInitializeGamePatched
 
