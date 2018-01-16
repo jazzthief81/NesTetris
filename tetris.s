@@ -961,7 +961,7 @@ lbl_86e9
         sta repeats
         sta demoIndex
         sta demoButtonsLowByte
-        sta gamePieceSpawnsHighByte
+        ds.b 2, $ea        ; Don't reset spiece spawn location here as it's already initialized in initializeGamePatched
         lda #$dd
         sta demoButtonsHighByte
         lda #RENDER_MODE_PLAY_AND_DEMO_SCREENS
@@ -4893,8 +4893,8 @@ RANDOMIZE_STARTING_POINT equ 0     ; determines whether the starting point insid
 initializeGamePatched
 		lda #>gamePieceSpawns
 		sta gamePieceSpawnsLowByte
-
-		jsr initializeGame
+		lda #0
+        sta gamePieceSpawnsHighByte
 
 		IF RANDOMIZE_STARTING_POINT
 
@@ -4905,11 +4905,11 @@ initializeGamePatched
         sta gamePieceSpawnsLowByte
 
         lda randomNumberHighByte
-        clc
-        adc gamePieceSpawnsHighByte
         sta gamePieceSpawnsHighByte
 
 		EIF
+
+		jsr initializeGame
 
 		rts
 endInitializeGamePatched
