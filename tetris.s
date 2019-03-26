@@ -923,10 +923,10 @@ initializeGame subroutine
         ldx #$4
         ldy #$4
         jsr fillMemPage
-        ldx #$f
+        ldx #$1f
         lda #$0
 lbl_86e9
-        sta tetriminoStats,x
+        sta droughtStats,x
         dex
         bne lbl_86e9
         lda #$5
@@ -972,7 +972,7 @@ lbl_86e9
         jsr getNextTetrimino
         sta pieceOrientationMirror
         sta $82
-        jsr updateTetriminoStats
+        jsr updateTetriminoStatsPatched
         ldx #randomNumberHighByte
         ldy #$2
         jsr generateRandomNumber
@@ -1830,9 +1830,9 @@ lbl_9649
         sta PPUADDR
         lda tetriminoStatsVramAdresses+1,x
         sta PPUADDR
-        lda tetriminoStatHighByte,x
+        lda droughtStatHighByte,x
         sta PPUDATA
-        lda tetriminoStatLowByte,x
+        lda droughtStatLowByte,x
         jsr printTwoDigitNumber
         inc $b0
         lda $b0
@@ -2123,7 +2123,7 @@ lbl_98ae
         ldx nextTetrimino
         lda spawnOrientations,x
         sta pieceOrientation
-        jsr updateTetriminoStats
+        jsr updateTetriminoStatsPatched
         lda numPlayers
         cmp #$1
         beq lbl_98e1
@@ -4899,141 +4899,70 @@ b_type_ending_screen_background
 type_a_ending_screen_background
         incbin backgrounds/a_type_ending_screen.bin
 
+;--------------------
+startPatchedRoutines
+;--------------------
+
+updateTetriminoStatsPatched subroutine
+        pha
+        tax
+        lda tetriminoTypes,x
+        asl
+        tax
+        ldy #0
+.update
+        tya
+        lda droughtStatLowByte,y
+        clc
+        adc #$1
+        sta $a8
+        and #$f
+        cmp #$a
+        bmi .noCarry
+        lda $a8
+        clc
+        adc #$6
+        sta $a8
+        cmp #$a0
+        bcc .noCarry
+        clc
+        adc #$60
+        sta $a8
+        lda droughtStatHighByte,y
+        clc
+        adc #$1
+        sta droughtStatHighByte,y
+.noCarry
+        lda $a8
+        sta droughtStatLowByte,y
+.next
+        iny
+        iny
+        cpy #16
+        bne .update
+
+        pla
+        pha
+
+        tax
+        lda tetriminoTypes,x
+        asl
+        tax
+        lda #0
+        sta droughtStatLowByte,x
+        sta droughtStatHighByte,x
+
+        pla
+        jmp updateTetriminoStats
+
+;--------------------
+endPatchedRoutines
+;--------------------
         ; Padding
 
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $80
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $04, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $40, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $10, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $04, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $c0, $60, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $f7, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $fb
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $7f, $ff, $df, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $df, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $fb, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $fe, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00
+		; Make sure the ROM stays aligned within the MMC1 mapper boundaries.
+		ds.b 1591-(endPatchedRoutines-startPatchedRoutines), $00
+;--------------------
 
 demoButtons
 

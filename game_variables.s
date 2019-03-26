@@ -145,6 +145,10 @@ ppuCtrlFlags equ $ff
 
 objectAttributeMemory equ $200 ; $200-$2ff
 
+droughtStats equ $3df ; base address used in loops
+droughtStatLowByte equ $3e0 ; $3e0-$3ed
+droughtStatHighByte equ $3e1
+
 tetriminoStats equ $3ef ; base address used in loops
 tetriminoStatLowByte equ $3f0 ; $3f0-$3fd
 tetriminoStatHighByte equ $3f1
