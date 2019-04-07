@@ -1389,7 +1389,7 @@ lbl_8a2c
         rol
         rol
         rol
-        adc #$2f
+        adc #$f
         sta $ab
         lda pieceOrientation
         sta $ac
@@ -1424,7 +1424,7 @@ lbl_8a4b
         lda #$2
         sta objectAttributeMemory,y
         lda originalValue
-        cmp #$2f
+        cmp #$f
         bcs lbl_8a84
         inc objectAttributeMemoryIndex
         dey
@@ -1741,9 +1741,9 @@ lbl_958c
         lda numPlayers
         cmp #$2
         beq lbl_95b5
-        lda #$20
+        lda #$23
         sta PPUADDR
-        lda #$73
+        lda #$39
         sta PPUADDR
         lda linesHighByteMirror
         sta PPUDATA
@@ -1762,9 +1762,9 @@ lbl_95b5
         sta PPUDATA
         lda linesLowByteMirror
         jsr printTwoDigitNumber
-        lda #$20
+        lda #$23
         sta PPUADDR
-        lda #$7a
+        lda #$3b
         sta PPUADDR
         lda $91
         sta PPUDATA
@@ -1878,9 +1878,9 @@ playfieldAddresses           ; playfieldAddress = 10 * vramRow
         dc.b $00, $0a, $14, $1e, $28, $32, $3c, $46, $50, $5a, $64, $6e, $78, $82, $8c, $96
         dc.b $a0, $aa, $b4, $be
 vramPlayfieldRows
-        dc.b $c6, $20, $e6, $20, $06, $21, $26, $21, $46, $21, $66, $21, $86, $21, $a6, $21
-        dc.b $c6, $21, $e6, $21, $06, $22, $26, $22, $46, $22, $66, $22, $86, $22, $a6, $22
-        dc.b $c6, $22, $e6, $22, $06, $23, $26, $23
+        dc.b $46, $20, $66, $20, $86, $20, $a6, $20, $c6, $20, $e6, $20, $06, $21
+        dc.b $26, $21, $46, $21, $66, $21, $86, $21, $a6, $21, $c6, $21, $e6, $21, $06, $22
+        dc.b $26, $22, $46, $22, $66, $22, $86, $22, $a6, $22
 printTwoDigitNumber
         sta $a8
         and #$f0
@@ -3661,7 +3661,7 @@ lbl_a3aa
         ldy #$2
         jsr fillMemPage
 lbl_a3c4
-        lda #linesLowByteMirror
+        lda #$70
         sta spriteX
         lda #$77
         sta spriteY
@@ -4873,7 +4873,8 @@ level_select_screen_background
         incbin backgrounds/level_select_screen.bin
 
 ingame_screen_background
-        incbin backgrounds/ingame_screen.bin
+        ;incbin backgrounds/ingame_screen.bin
+        include backgrounds/ingame_screen.s
 
 highscore_screen_background
         incbin backgrounds/highscore_screen.bin
