@@ -841,7 +841,7 @@ initializePlayBackground subroutine
         dc.b <ingame_screen_background, >ingame_screen_background
         lda #$20
         sta PPUADDR
-        lda #$83
+        lda #$43
         sta PPUADDR
         lda aType
         bne lbl_863c
@@ -849,7 +849,7 @@ initializePlayBackground subroutine
         sta PPUDATA
         lda #$20                   ; Draw top A-TYPE score
         sta PPUADDR
-        lda #$b8
+        lda #$78
         sta PPUADDR
         lda highScoresAType
         jsr printTwoDigitNumber
@@ -863,7 +863,7 @@ lbl_863c
         sta PPUDATA
         lda #$20                   ; Draw top B-TYPE score
         sta PPUADDR
-        lda #$b8
+        lda #$78
         sta PPUADDR
         lda highScoresBType
         jsr printTwoDigitNumber
@@ -1532,7 +1532,7 @@ showNextTetrimino subroutine
         bne .return
         lda #$c8
         sta spriteX
-        lda #$77
+        lda #$57
         sta spriteY
         ldx nextTetrimino
         lda tetriminoSpriteIndex,x
@@ -1741,9 +1741,9 @@ lbl_958c
         lda numPlayers
         cmp #$2
         beq lbl_95b5
-        lda #$23
+        lda #$22
         sta PPUADDR
-        lda #$39
+        lda #$b9
         sta PPUADDR
         lda linesHighByteMirror
         sta PPUDATA
@@ -1762,9 +1762,9 @@ lbl_95b5
         sta PPUDATA
         lda linesLowByteMirror
         jsr printTwoDigitNumber
-        lda #$23
+        lda #$22
         sta PPUADDR
-        lda #$3b
+        lda #$bb
         sta PPUADDR
         lda $91
         sta PPUDATA
@@ -1785,7 +1785,7 @@ lbl_95e3
         sta $a8
         lda #$22
         sta PPUADDR
-        lda #$ba
+        lda #$3a
         sta PPUADDR
         lda $a8
         jsr printTwoDigitNumber
@@ -1800,9 +1800,9 @@ lbl_960e
         lda $a3
         and #$4
         beq lbl_9639
-        lda #$21
+        lda #$20
         sta PPUADDR
-        lda #$18
+        lda #$d8
         sta PPUADDR
         lda scoreMirror+2
         jsr printTwoDigitNumber
@@ -1870,7 +1870,7 @@ lbl_9698
         rts
 ;--------------------
 tetriminoStatsVramAdresses
-        dc.b $21, $86, $21, $c6, $22, $06, $22, $46, $22, $86, $22, $c6, $23, $06
+        dc.b $21, $06, $21, $46, $21, $86, $21, $c6, $22, $06, $22, $46, $22, $86
 levelToBinaryCodedDecimal
         dc.b $00, $01, $02, $03, $04, $05, $06, $07, $08, $09, $10, $11, $12, $13, $14, $15
         dc.b $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
