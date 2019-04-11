@@ -3625,6 +3625,7 @@ renderCongratulationsScreens subroutine
 .return
         rts
 ;--------------------
+
 checkStartPressed subroutine
         lda gameMode
         cmp #GAME_MODE_DEMO
@@ -3654,28 +3655,22 @@ lbl_a3aa
         lda #RENDER_MODE_LEGAL_TITLE_SCREENS
         sta renderMode
         jsr waitForVerticalBlankingInterval
-        lda #$16
-        sta PPUMASK
-        lda #$ff
-        ldx #$2
-        ldy #$2
-        jsr fillMemPage
-lbl_a3c4
-        lda #$70
+        lda #116									; Show PAUSE sprites.
         sta spriteX
-        lda #$77
+        lda #185
         sta spriteY
         lda #$5
         sta objectAttributeEntryIndex
+        lda #4*25
+        sta objectAttributeMemoryIndex
         jsr copyObjectAttributeData
+lbl_a3c4
         lda buttonStateMirror
         cmp #JOYPAD_START
         beq lbl_a3df
-        jsr waitForVerticalBlankAndClearOAM
+        jsr waitForVerticalBlankingInterval
         jmp lbl_a3c4
 lbl_a3df
-        lda #$1e
-        sta PPUMASK
         lda #$0
         sta $68d
         sta vramRowMirror
@@ -3684,6 +3679,8 @@ lbl_a3df
 .nextPlayMode
         inc playMode
         rts
+endCheckStartPressed
+        ds.b ($a3f2-$a37f)-(endCheckStartPressed-checkStartPressed)
 ;--------------------
 checkBTypeGoal subroutine
         lda aType
