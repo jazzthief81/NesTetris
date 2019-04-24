@@ -145,6 +145,24 @@ ppuCtrlFlags equ $ff
 
 objectAttributeMemory equ $200 ; $200-$2ff
 
+heights equ $326            ; from $326 (left column) until $32f (right column)
+                            ; value denotes the height of the highest non-empty square in that column, counting from the
+                            ; bottom, 0 = empty column
+height equ $330             ; local variable to keep the height of the current column
+heightCol equ $331          ; local variable to keep the column for which the height is currently being calculated
+pieceAccommodations equ $340 ; list of 10 accommodation values (one for each column), value is number of ways that a piece can fit.
+relativeHeights equ $357    ; from $357 (left column) until $35f (right column)
+accommodationT equ $360     ; list of 10 accommodation values (one for each column), 1 is fit, 0 is no fit
+accommodationJ equ $370
+accommodationZ equ $380
+accommodationO equ $390
+accommodationS equ $3a0
+accommodationL equ $3b0
+accommodationI equ $3c0
+accommodationTotal equ $3d0 ; list of 10 accommodation values (one for each column), value is number of pieces that fit (min. 1, max. 7)
+metricsRenderFlags equ $3e8
+RENDER_CURRENT_METRICS equ $08
+
 tetriminoStats equ $3ef ; base address used in loops
 tetriminoStatLowByte equ $3f0 ; $3f0-$3fd
 tetriminoStatHighByte equ $3f1

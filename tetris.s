@@ -81,7 +81,7 @@ render subroutine
         dc.b <renderLegalTitleScreens, >renderLegalTitleScreens             ; RENDER_MODE_LEGAL_TITLE_SCREENS
         dc.b <renderMenuScreens, >renderMenuScreens                         ; RENDER_MODE_MENU_SCREENS
         dc.b <renderCongratulationsScreens, >renderCongratulationsScreens   ; RENDER_MODE_CONGRATULATIONS_SCREENS
-        dc.b <renderPlayAndDemoScreens, >renderPlayAndDemoScreens           ; RENDER_MODE_PLAY_AND_DEMO_SCREENS
+        dc.b <renderPlayAndDemoScreensPatched, >renderPlayAndDemoScreensPatched           ; RENDER_MODE_PLAY_AND_DEMO_SCREENS
         dc.b <renderEndingAnimation, >renderEndingAnimation                 ; RENDER_MODE_ENDING_ANIMATION
 ;--------------------
 bootContinued subroutine
@@ -267,8 +267,8 @@ advanceGame2 subroutine
 advancePlayMode subroutine
         lda playMode
         jsr switch
-        dc.b <initializePlayBackground, >initializePlayBackground
-        dc.b <initializeGame, >initializeGame
+        dc.b <initializePlayBackgroundPatched, >initializePlayBackgroundPatched
+        dc.b <initializeGamePatched, >initializeGamePatched
         dc.b <checkSelectPressed, >checkSelectPressed
         dc.b <showHighScore, >showHighScore
         dc.b <advanceGame, >advanceGame
@@ -288,7 +288,7 @@ advancePlayState subroutine
         dc.b <updateLinesStats, >updateLinesStats              ; PLAY_STATE_UPDATE_LINES_STATS
         dc.b <checkBTypeGoal, >checkBTypeGoal                  ; PLAY_STATE_B_TYPE_GOAL_CHECK
         dc.b <unused2PlayerLogic, >unused2PlayerLogic          ; PLAY_STATE_UNUSED_7
-        dc.b <spawnTetrimino, >spawnTetrimino                  ; PLAY_STATE_SPAWN_TETRIMINO
+        dc.b <spawnTetriminoPatched, >spawnTetriminoPatched    ; PLAY_STATE_SPAWN_TETRIMINO
         dc.b <returnPlayState, >returnPlayState                ; PLAY_STATE_UNUSED_9
         dc.b <updateGameOverCurtain, >updateGameOverCurtain    ; PLAY_STATE_GAME_OVER_CURTAIN
         dc.b <incrementPlayState, >incrementPlayState          ; PLAY_STATE_INCREMENT_PLAY_STATE
@@ -310,7 +310,7 @@ advancePlayState2 subroutine
         dc.b <updateLinesStats, >updateLinesStats              ; PLAY_STATE_UPDATE_LINES_STATS
         dc.b <checkBTypeGoal, >checkBTypeGoal                  ; PLAY_STATE_B_TYPE_GOAL_CHECK
         dc.b <unused2PlayerLogic, >unused2PlayerLogic          ; PLAY_STATE_UNUSED_7
-        dc.b <spawnTetrimino, >spawnTetrimino                  ; PLAY_STATE_SPAWN_TETRIMINO
+        dc.b <spawnTetriminoPatched, >spawnTetriminoPatched    ; PLAY_STATE_SPAWN_TETRIMINO
         dc.b <returnPlayState, >returnPlayState                ; PLAY_STATE_UNUSED_9
         dc.b <updateGameOverCurtain, >updateGameOverCurtain    ; PLAY_STATE_GAME_OVER_CURTAIN
         dc.b <incrementPlayState, >incrementPlayState          ; PLAY_STATE_INCREMENT_PLAY_STATE
@@ -4897,141 +4897,510 @@ b_type_ending_screen_background
 type_a_ending_screen_background
         incbin backgrounds/a_type_ending_screen.bin
 
+
+        ; Patched routines.
+
+;--------------------
+startPatchedRoutines
+;--------------------
+initializePlayBackgroundPatched subroutine
+        lda #$ff
+        sta metricsRenderFlags
+        jsr initializePlayBackground
+;--------------------
+initializeGamePatched subroutine
+        jsr initializeGame
+        jsr updateMetrics
+        rts
+;--------------------
+spawnTetriminoPatched subroutine
+        jsr spawnTetrimino		; Execute usual game logic
+        lda playState			; Did the play state transition from SPAWN to ACTIVE?
+        cmp #PLAY_STATE_TETRIMINO_ACTIVE
+        bne .return
+        jsr updateMetrics
+.return
+        rts
+;--------------------
+updateMetrics subroutine
+        jsr checkHeights
+        jsr updateAccommodationScore
+
+        lda #$0
+        sta metricsRenderFlags
+
+        rts
+;--------------------
+checkHeights subroutine
+        ldy #0					; Cell offset in playfield
+        sty	heightCol
+.nextCol
+		lda #0
+		sta height
+		ldx #20                 ; Row number in column
+.nextRow
+        lda ($b8),y				; Read cell from playfield
+        cmp #$ef				; Is it empty?
+        beq .emptyCell
+        stx height
+        tya						; Skip remaining rows
+.skipRow
+        clc
+        adc #10
+		dex
+        cpx #0
+        bne .skipRow
+        tay
+        jmp .endRow
+.emptyCell
+        tya						; Increase cell offset and row number
+        clc
+        adc #10
+        tay
+		dex
+        cpx #0
+		bne .nextRow
+.endRow
+		ldx heightCol			; Store height in table
+		lda height
+		sta heights,x
+		inx
+		stx heightCol
+
+        tya						; Move to start of next column
+        sec
+        sbc #199
+        tay
+        cpx #10  				; Did we reach the end of the playfield?
+        bne .nextCol
+
+		; Calculate relativeHeights (differences between neighboring column heights)
+		ldx #0
+.nextRelativeHeightCol
+		lda heights+1,x
+		sec
+		sbc heights,x
+		sta relativeHeights,x
+		inx
+		cpx #9
+		bne .nextRelativeHeightCol
+
+		rts
+;--------------------
+updateAccommodationScore subroutine
+        ; Clear piece accommodation scores
+
+        ldx #0
+.clearNextAccommodation
+        lda #1
+        sta pieceAccommodations,x
+        sta accommodationI,x
+        lda #0
+        sta accommodationT,x
+        sta accommodationJ,x
+        sta accommodationZ,x
+        sta accommodationO,x
+        sta accommodationS,x
+        sta accommodationL,x
+        inx
+        cpx #10
+        bne .clearNextAccommodation
+
+        ldx #0
+        ldy #1
+.testNextColumn
+        lda relativeHeights,x
+
+        ; Width 2 accommodation tests
+
+        cmp #0
+        beq .height0
+        cmp #1
+        beq .height1
+        cmp #-1
+        beq .heightMinus1
+        cmp #2
+        beq .height2
+        cmp #-2
+        beq .heightMinus2jmp
+        jmp .width3Tests
+.heightMinus2jmp
+        jmp .heightMinus2
+.height0
+        clc
+        lda #3
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #3
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        sta accommodationO,x
+        sta accommodationJ,x
+        sta accommodationL,x
+        sta accommodationO+1,x
+        sta accommodationJ+1,x
+        sta accommodationL+1,x
+        jmp .width3Tests
+.height1
+        clc
+        lda #2
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #2
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        sta accommodationZ,x
+        sta accommodationT,x
+        sta accommodationZ+1,x
+        sta accommodationT+1,x
+        jmp .width3Tests
+.heightMinus1
+        clc
+        lda #2
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #2
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        sta accommodationS,x
+        sta accommodationT,x
+        sta accommodationS+1,x
+        sta accommodationT+1,x
+        jmp .width3Tests
+.height2
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        sta accommodationJ,x
+        sta accommodationJ+1,x
+        jmp .width3Tests
+.heightMinus2
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        sta accommodationL,x
+        sta accommodationL+1,x
+        jmp .width3Tests
+
+        ; Width 3 accommodation tests
+.width3Tests
+        cpx #8
+        bne .continueWidth3Tests
+        jmp .noWidth3Tests
+.continueWidth3Tests
+        lda relativeHeights,x
+        cmp #-1
+        bne .noFlatZ
+        lda relativeHeights+1,x
+        cmp #1
+        bne .noFlatT
+        jmp .flatT
+.noFlatT
+        cmp #0
+        bne .noFlatZ
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationZ,x
+        sta accommodationZ+1,x
+        sta accommodationZ+2,x
+        jmp .noWidth3Tests
+.noFlatZ
+        lda relativeHeights,x
+        beq .flatStart
+        cmp #1
+        beq .upStart
+        jmp .noWidth3Tests
+.flatStart
+        lda relativeHeights+1,x
+        bne .noFlatTLJ
+        jmp .flatTLJ
+.noFlatTLJ
+        cmp #1
+        bne .noFlatS
+        jmp .flatS
+.noFlatS
+        cmp #-1
+        beq .flatJ
+        jmp .noWidth3Tests
+.upStart
+        lda relativeHeights+1,x
+        bne .noFlatL
+        jmp .flatL
+.noFlatL
+        jmp .noWidth3Tests
+.flatTLJ
+        clc
+        lda #3
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #3
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #3
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationT,x
+        sta accommodationT+1,x
+        sta accommodationT+2,x
+        sta accommodationJ,x
+        sta accommodationJ+1,x
+        sta accommodationJ+2,x
+        sta accommodationL,x
+        sta accommodationL+1,x
+        sta accommodationL+2,x
+        jmp .noWidth3Tests
+.flatT
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationT,x
+        sta accommodationT+1,x
+        sta accommodationT+2,x
+        jmp .noWidth3Tests
+.flatJ
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationL,x
+        sta accommodationL+1,x
+        sta accommodationL+2,x
+        jmp .noWidth3Tests
+.flatL
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationL,x
+        sta accommodationL+1,x
+        sta accommodationL+2,x
+        jmp .noWidth3Tests
+.flatS
+        clc
+        lda #1
+        adc pieceAccommodations,x
+        sta pieceAccommodations,x
+        lda #1
+        adc pieceAccommodations+1,x
+        sta pieceAccommodations+1,x
+        lda #1
+        adc pieceAccommodations+2,x
+        sta pieceAccommodations+2,x
+        lda #1
+        sta accommodationS,x
+        sta accommodationS+1,x
+        sta accommodationS+2,x
+        jmp .noWidth3Tests
+
+.noWidth3Tests
+        inx
+        cpx #9
+        beq .return
+        jmp .testNextColumn
+
+.return
+        ; Add up all accommodation scores for each column.
+
+        ldx #0
+.addNextAccommodation
+        clc
+        lda #0
+        adc accommodationI,x
+        adc accommodationT,x
+        adc accommodationJ,x
+        adc accommodationZ,x
+        adc accommodationO,x
+        adc accommodationS,x
+        adc accommodationL,x
+        sta accommodationTotal,x
+        inx
+        cpx #10
+        bne .addNextAccommodation
+
+        rts
+;--------------------
+renderPlayAndDemoScreensPatched subroutine
+        jsr renderPlayAndDemoScreens	; Render standard in-play screen
+
+        lda metricsRenderFlags          ; Render metrics if needed
+        cmp #$ff
+        beq .return
+        jsr renderMetrics
+        jmp .return
+.return
+        rts
+;--------------------
+renderMetrics subroutine
+        lda metricsRenderFlags
+        tax
+
+        lda #$23                   ; Draw max segment
+        sta PPUADDR
+        clc
+        txa
+        adc #$0c
+        sta PPUADDR
+
+.nextMaxSegement
+        lda accommodationTotal,x
+        cmp #7
+        beq .acc7
+        lda #$ff
+        jmp .drawMaxSegment
+.acc7   lda #$2e
+        jmp .drawMaxSegment
+.drawMaxSegment
+        sta PPUDATA
+
+        lda #$23                   ; Draw top two segments
+        sta PPUADDR
+        clc
+        txa
+        adc #$2c
+        sta PPUADDR
+
+.nextTopSegement
+        lda accommodationTotal,x
+        cmp #5
+        beq .acc5
+        cmp #6
+        bpl .acc6plus
+        lda #$ff
+        jmp .drawTopSegment
+.acc5   lda #$2e
+        jmp .drawTopSegment
+.acc6plus
+        lda #$2f
+        jmp .drawTopSegment
+.drawTopSegment
+        sta PPUDATA
+        
+        lda #$23                   ; Draw middle two segments
+        sta PPUADDR
+        clc
+        txa
+        adc #$4c
+        sta PPUADDR
+
+.nextMiddleSegement
+        lda accommodationTotal,x
+        cmp #3
+        beq .acc3
+        cmp #4
+        bpl .acc4plus
+        lda #$ff
+        jmp .drawMiddleSegment
+.acc3   lda #$2c
+        jmp .drawMiddleSegment
+.acc4plus
+        lda #$2f
+        jmp .drawMiddleSegment
+.drawMiddleSegment
+        sta PPUDATA
+
+        lda #$23                   ; Draw bottom two segments
+        sta PPUADDR
+        clc
+        txa
+        adc #$6c
+        sta PPUADDR
+
+.nextBottomSegement
+        lda accommodationTotal,x
+        cmp #0
+        beq .acc0
+        cmp #1
+        beq .acc1
+        cmp #2
+        beq .acc2
+        cmp #4
+        bpl .accBottomGreen
+        jmp .acc2
+.acc0   lda #$ff
+        jmp .drawBottomSegment
+.acc1   lda #$2a
+        jmp .drawBottomSegment
+.acc2   lda #$2d
+        jmp .drawBottomSegment
+.accBottomGreen
+        lda #$2f
+        jmp .drawBottomSegment
+.drawBottomSegment
+        sta PPUDATA
+
+        lda #$23                   ; Draw accommodation value
+        sta PPUADDR
+        clc
+        txa
+        adc #$8c
+        sta PPUADDR
+        lda accommodationTotal,x
+        sta PPUDATA
+
+        inx
+        cpx #10
+        bne .nextColumn
+        lda #$ff
+        sta metricsRenderFlags
+        jmp .return
+.nextColumn
+        stx metricsRenderFlags
+
+.return
+        rts
+;--------------------
+endPatchedRoutines
+;--------------------
+
         ; Padding
 
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $80
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $04, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $40, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $10, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $04, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $c0, $60, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $f7, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $fb
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $7f, $ff, $df, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $df, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $fb, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $fe, $ff, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-        dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-        dc.b $00, $00, $00, $00, $00, $00, $00
+        ; Make sure the ROM stays aligned within the MMC1 mapper boundaries.
+        ds.b 1591-(endPatchedRoutines-startPatchedRoutines), $00
 
 demoButtons
 
