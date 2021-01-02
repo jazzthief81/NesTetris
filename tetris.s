@@ -4903,8 +4903,12 @@ type_a_ending_screen_background
 startPatchedRoutines
 ;--------------------
 showNextTetriminoPatched subroutine
-		jsr showNextTetrimino
+        lda numPlayers
+        cmp #1
+        bne .noSinglePlayer
+        jsr showNextTetrimino
 		jsr showJoyPadButtons
+.noSinglePlayer
 		rts
 ;--------------------
 showJoyPadButtons subroutine
