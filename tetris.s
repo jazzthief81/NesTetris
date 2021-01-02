@@ -4914,9 +4914,10 @@ showJoyPadButtons subroutine
 
         lda #192
 		sta objectAttributeMemory,y
-        lda #$d6
 		iny
+        lda #$d6
 		sta objectAttributeMemory,y
+		iny
 		lda buttonPressed
 		and #(JOYPAD_LEFT)
 		cmp #(JOYPAD_LEFT)
@@ -4926,20 +4927,20 @@ showJoyPadButtons subroutine
 .leftPressed
         lda #$03
 .setLeftColor
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #192
-		iny
 		sta objectAttributeMemory,y
+		iny
 
 		; Show right arrow.
 
         lda #192
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #$c6
-		iny
 		sta objectAttributeMemory,y
+		iny
 		lda buttonPressed
 		and #(JOYPAD_RIGHT)
 		cmp #(JOYPAD_RIGHT)
@@ -4949,20 +4950,20 @@ showJoyPadButtons subroutine
 .rightPressed
         lda #$03
 .setRightColor
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #205
-		iny
 		sta objectAttributeMemory,y
+		iny
 
 		; Show down arrow.
 
         lda #198
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #$e6
-		iny
 		sta objectAttributeMemory,y
+		iny
 		lda buttonPressed
 		and #(JOYPAD_DOWN)
 		cmp #(JOYPAD_DOWN)
@@ -4972,20 +4973,20 @@ showJoyPadButtons subroutine
 .downPressed
         lda #$03
 .setDownColor
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #199
-		iny
 		sta objectAttributeMemory,y
+		iny
 
 		; Show B button.
 
         lda #200
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #$f7
-		iny
 		sta objectAttributeMemory,y
+		iny
 		lda buttonPressed
 		and #(JOYPAD_B)
 		cmp #(JOYPAD_B)
@@ -4995,20 +4996,20 @@ showJoyPadButtons subroutine
 .bPressed
         lda #$03
 .setBColor
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #215
-		iny
 		sta objectAttributeMemory,y
+		iny
 
 		; Show A button.
 
         lda #200
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #$f6
-		iny
 		sta objectAttributeMemory,y
+		iny
 		lda buttonPressed
 		and #(JOYPAD_A)
 		cmp #(JOYPAD_A)
@@ -5018,16 +5019,13 @@ showJoyPadButtons subroutine
 .aPressed
         lda #$03
 .setAColor
-		iny
 		sta objectAttributeMemory,y
+		iny
         lda #224
-		iny
 		sta objectAttributeMemory,y
+		iny
 
-		tya
-		clc
-		adc objectAttributeMemoryIndex
-		sta objectAttributeMemoryIndex
+		sty objectAttributeMemoryIndex
 
 		rts
 ;--------------------
