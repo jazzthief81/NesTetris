@@ -1,5 +1,8 @@
         processor 6502
 
+DEV     EQU 0 ; 0 = use exact padding from original ROM (has to be updated manually)
+              ; 1 = automatically fill up padding area with correct number of zeroes
+
         include mmc1_registers.s
         include ppu_registers.s
         include apu_registers.s
@@ -5037,8 +5040,146 @@ endPatchedRoutines
 ;--------------------
         ; Padding
 
-		; Make sure the ROM stays aligned within the MMC1 mapper boundaries.
-		ds.b 1591-(endPatchedRoutines-startPatchedRoutines), $00
+        IF DEV
+            ; Make sure the ROM stays aligned within the MMC1 mapper boundaries.
+            ds.b 1591-(endPatchedRoutines-startPatchedRoutines), $00
+        ELSE
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            ; dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            ; dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02
+            dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
+            dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $80
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $04, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $40, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $10, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $04, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $c0, $60, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $f7, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $fb
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $7f, $ff, $df, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $df, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $fb, $ff, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $fe, $ff, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+            dc.b $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+            dc.b $00, $00, $00, $00, $00, $00, $00
+    ENDIF
+
 ;--------------------
 demoButtons
 
